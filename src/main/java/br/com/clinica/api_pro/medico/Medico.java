@@ -1,5 +1,7 @@
 package br.com.clinica.api_pro.medico;
 
+import br.com.clinica.api_pro.endereco.Endereco;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -27,7 +29,9 @@ public class Medico {
     private String crm;
     @Enumerated(EnumType.STRING)
     private Especialidade especialidade;
-    private String cidade;
+    
+    @Embedded
+    private Endereco endereco;
 
     public Medico(DadosCadastroMedico dados) {
         this.nome = dados.nome();
@@ -35,6 +39,6 @@ public class Medico {
         this.telefone = dados.telefone();
         this.crm = dados.crm();
         this.especialidade = dados.especialidade();
-        this.cidade = dados.cidade();
+        this.endereco = new Endereco(dados.endereco());
     }
 }

@@ -1,5 +1,7 @@
 package br.com.clinica.api_pro.paciente;
 
+import br.com.clinica.api_pro.endereco.Endereco;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -23,13 +25,15 @@ public class Paciente {
     private String email;
     private String telefone;
     private String cpf;
-    private String cidade;
+    
+    @Embedded
+    private Endereco endereco;
 
     public Paciente(DadosCadastroPaciente dados) {
         this.nome = dados.nome();
         this.email = dados.email();
         this.telefone = dados.telefone();
         this.cpf = dados.cpf();
-        this.cidade = dados.cidade();
+        this.endereco = new Endereco(dados.endereco());
     }
 }
