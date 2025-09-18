@@ -5,12 +5,17 @@ import br.com.clinica.api_pro.paciente.DadosListagemPaciente;
 import br.com.clinica.api_pro.paciente.Paciente;
 import br.com.clinica.api_pro.paciente.PacienteRepository;
 import jakarta.validation.Valid;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+
+import br.com.clinica.api_pro.paciente.DadosAtualizacaoPaciente;
+import br.com.clinica.api_pro.paciente.DadosDetalhamentoPaciente;
 
 @RestController
 @RequestMapping("/pacientes")
@@ -33,5 +38,20 @@ public class PacienteController {
         
         // Converte a página de entidades Paciente para uma página de DTOs DadosListagemPaciente
         return paginaDePacientes.map(DadosListagemPaciente::new);
+    }
+
+    @PutMapping("/{id}")
+    @Transactional
+    public ResponseEntity atualizar(@PathVariable Long id, @RequestBody @Valid DadosAtualizacaoPaciente dados) {
+        var paciente = repository.findById(id);
+
+        if (paciente.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+
+        var pacienteEncontrado = paciente.get();
+        pacienteEncontrado.atualizarInformacoes(dados);
+
+        return ResponseEntity.ok(new DadosDetalhamentoPaciente(pacienteEncontrado));
     }
 }
