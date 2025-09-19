@@ -32,12 +32,9 @@ public class PacienteController {
     }
 
     @GetMapping
-    public Page<DadosListagemPaciente> listar(@PageableDefault(page = 0, size = 10, sort = {"nome"}) Pageable paginacao) {
-        // Busca os pacientes, já paginado pelo Spring
-        Page<Paciente> paginaDePacientes = repository.findAll(paginacao);
-        
-        // Converte a página de entidades Paciente para uma página de DTOs DadosListagemPaciente
-        return paginaDePacientes.map(DadosListagemPaciente::new);
+    public ResponseEntity<Page<DadosListagemPaciente>> listar(@PageableDefault(page = 0, size = 10, sort = {"nome"}) Pageable paginacao) {
+        var page = repository.findAllByAtivoTrue(paginacao).map(DadosListagemPaciente::new);
+        return ResponseEntity.ok(page);
     }
 
     @PutMapping("/{id}")
@@ -53,5 +50,23 @@ public class PacienteController {
         pacienteEncontrado.atualizarInformacoes(dados);
 
         return ResponseEntity.ok(new DadosDetalhamentoPaciente(pacienteEncontrado));
+    }
+
+    @DeleteMapping("/{id}")
+    @Transactional
+    public ResponseEntity excluir(@PathVariable Long id) {
+        var paciente = repository.getReferenceById(id);
+        paciente.excluir(); 
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/{id}/ativar")
+    @Transactional
+    public ResponseEntity reativar(@PathVariable Long id) {
+        var paciente = repository.getReferenceById(id);
+        paciente.reativar();
+
+        return ResponseEntity.ok(new DadosDetalhamentoPaciente(paciente));
     }
 }

@@ -1,6 +1,7 @@
 package br.com.clinica.api_pro.paciente;
 
 import br.com.clinica.api_pro.endereco.Endereco;
+import jakarta.persistence.Column;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -25,11 +26,13 @@ public class Paciente {
     private String email;
     private String telefone;
     private String cpf;
-    
     @Embedded
     private Endereco endereco;
+    @Column(columnDefinition = "tinyint")
+    private Boolean ativo;
 
     public Paciente(DadosCadastroPaciente dados) {
+        this.ativo = true;
         this.nome = dados.nome();
         this.email = dados.email();
         this.telefone = dados.telefone();
@@ -53,5 +56,13 @@ public class Paciente {
         if (dados.endereco() != null) {
             this.endereco.atualizarInformacoes(dados.endereco());
         }
+    }
+
+    public void excluir() {
+        this.ativo = false;
+    }
+
+    public void reativar() {
+        this.ativo = true;
     }
 }
