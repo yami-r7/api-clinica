@@ -1,5 +1,7 @@
 package br.com.clinica.api_pro.controller;
 
+import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,7 +16,9 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import br.com.clinica.api_pro.infra.ApiResponse;
 import br.com.clinica.api_pro.medico.DadosAtualizacaoMedico;
 import br.com.clinica.api_pro.medico.DadosCadastroMedico;
 import br.com.clinica.api_pro.medico.DadosDetalhamentoMedico;
@@ -32,8 +36,21 @@ public class MedicoController {
 
     @PostMapping
     @Transactional
-    public void cadastrar(@RequestBody @Valid DadosCadastroMedico dados) {
-        repository.save(new Medico(dados));
+    public ResponseEntity<ApiResponse<DadosDetalhamentoMedico>> cadastrar(@RequestBody @Valid DadosCadastroMedico dados, UriComponentsBuilder uriBuilder) {
+        var medico = new Medico(dados);
+        repository.save(medico);
+
+        var medicoDetalhado = new DadosDetalhamentoMedico(medico);
+
+        var response = new ApiResponse<>(
+            LocalDateTime.now(),
+            "Médico cadastrado com sucesso!",
+            medicoDetalhado
+        );
+
+        var uri = uriBuilder.path("/medicos/{id}").buildAndExpand(medico.getId()).toUri();
+
+        return ResponseEntity.created(uri).body(response);
     }
 
     @GetMapping
@@ -44,34 +61,52 @@ public class MedicoController {
 
     @PutMapping("/{id}")
     @Transactional
-    public ResponseEntity atualizar(@PathVariable Long id, @RequestBody @Valid DadosAtualizacaoMedico dados) {
-        var medico = repository.findById(id);
+    public ResponseEntity<ApiResponse<DadosDetalhamentoMedico>> atualizar(@PathVariable Long id, @RequestBody @Valid DadosAtualizacaoMedico dados) {
+        var medicoEncontrado = repository.findById(id);
 
-        if (medico.isEmpty()) {
+        if (medicoEncontrado.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        var medicoEncontrado = medico.get();
-        medicoEncontrado.atualizarInformacoes(dados);
+        var medico = medicoEncontrado.get();
+        medico.atualizarInformacoes(dados);
 
-        return ResponseEntity.ok(new DadosDetalhamentoMedico(medicoEncontrado));
+        var response = new ApiResponse<>(
+            LocalDateTime.now(),
+            "Dados do médico atualizados com sucesso!",
+            new DadosDetalhamentoMedico(medico)
+    );
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     @Transactional
-    public ResponseEntity excluir(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Object>> excluir(@PathVariable Long id) {
         var medico = repository.getReferenceById(id);
         medico.excluir(); 
 
-        return ResponseEntity.noContent().build();
+        var response = new ApiResponse<> (
+            LocalDateTime.now(),
+            "Médico desativado com sucesso!",
+            null
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}/ativar")
     @Transactional
-    public ResponseEntity reativar(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<DadosDetalhamentoMedico>> reativar(@PathVariable Long id) {
         var medico = repository.getReferenceById(id);
         medico.reativar();
 
-        return ResponseEntity.ok(new DadosDetalhamentoMedico(medico));
+        var response = new ApiResponse<>(
+            LocalDateTime.now(),
+            "Médico reativado com sucesso!",
+            new DadosDetalhamentoMedico(medico)
+        );
+
+        return ResponseEntity.ok(response);
     }
 }

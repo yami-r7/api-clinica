@@ -6,6 +6,8 @@ import br.com.clinica.api_pro.paciente.Paciente;
 import br.com.clinica.api_pro.paciente.PacienteRepository;
 import jakarta.validation.Valid;
 
+import java.time.LocalDateTime;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -13,7 +15,9 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
+import br.com.clinica.api_pro.infra.ApiResponse;
 import br.com.clinica.api_pro.paciente.DadosAtualizacaoPaciente;
 import br.com.clinica.api_pro.paciente.DadosDetalhamentoPaciente;
 
@@ -26,9 +30,21 @@ public class PacienteController {
 
     @PostMapping
     @Transactional
-    public void cadastrar(@RequestBody @Valid DadosCadastroPaciente dados) {
-        // Cria a entidade Paciente com os dados do DTO
-        repository.save(new Paciente(dados));
+    public ResponseEntity<ApiResponse<DadosDetalhamentoPaciente>> cadastrar(@RequestBody @Valid DadosCadastroPaciente dados, UriComponentsBuilder uriBuilder) {
+        var paciente = new Paciente(dados);
+        repository.save(paciente);
+
+        var pacienteDetalhado = new DadosDetalhamentoPaciente(paciente);
+
+        var response = new ApiResponse<>(
+            LocalDateTime.now(),
+            "Paciente cadastrado com sucesso!",
+            pacienteDetalhado
+        );
+
+        var uri = uriBuilder.path("/pacientes/{id}").buildAndExpand(paciente.getId()).toUri();
+
+        return ResponseEntity.created(uri).body(response);
     }
 
     @GetMapping
@@ -39,34 +55,52 @@ public class PacienteController {
 
     @PutMapping("/{id}")
     @Transactional
-    public ResponseEntity atualizar(@PathVariable Long id, @RequestBody @Valid DadosAtualizacaoPaciente dados) {
-        var paciente = repository.findById(id);
+    public ResponseEntity<ApiResponse<DadosDetalhamentoPaciente>> atualizar(@PathVariable Long id, @RequestBody @Valid DadosAtualizacaoPaciente dados) {
+        var pacienteEncontrado = repository.findById(id);
 
-        if (paciente.isEmpty()) {
+        if (pacienteEncontrado.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
 
-        var pacienteEncontrado = paciente.get();
-        pacienteEncontrado.atualizarInformacoes(dados);
+        var paciente = pacienteEncontrado.get();
+        paciente.atualizarInformacoes(dados);
 
-        return ResponseEntity.ok(new DadosDetalhamentoPaciente(pacienteEncontrado));
+        var response = new ApiResponse<>(
+            LocalDateTime.now(),
+            "Dados do paciente atualizados com sucesso!",
+            new DadosDetalhamentoPaciente(paciente)
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     @Transactional
-    public ResponseEntity excluir(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<Object>> excluir(@PathVariable Long id) {
         var paciente = repository.getReferenceById(id);
         paciente.excluir(); 
 
-        return ResponseEntity.noContent().build();
+        var response = new ApiResponse<>(
+            LocalDateTime.now(),
+            "Paciente desativado com sucesso",
+            null
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}/ativar")
     @Transactional
-    public ResponseEntity reativar(@PathVariable Long id) {
+    public ResponseEntity<ApiResponse<DadosDetalhamentoPaciente>> reativar(@PathVariable Long id) {
         var paciente = repository.getReferenceById(id);
         paciente.reativar();
 
-        return ResponseEntity.ok(new DadosDetalhamentoPaciente(paciente));
+        var response = new ApiResponse<>(
+            LocalDateTime.now(),
+            "Paciente reativado com sucesso",
+            new DadosDetalhamentoPaciente(paciente)
+        );
+
+        return ResponseEntity.ok(response);
     }
 }
