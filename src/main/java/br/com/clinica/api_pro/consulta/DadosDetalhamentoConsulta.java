@@ -1,8 +1,17 @@
 package br.com.clinica.api_pro.consulta;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.time.LocalDateTime;
 
-public record DadosDetalhamentoConsulta(Long id, Long idMedico, Long idPaciente, LocalDateTime data, MotivoCancelamento motivoCancelamento) {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public record DadosDetalhamentoConsulta(
+        Long id,
+        Long idMedico,
+        Long idPaciente,
+        LocalDateTime data,
+        MotivoCancelamento motivoCancelamento
+) {
     public DadosDetalhamentoConsulta(Consulta consulta) {
         this(
                 consulta.getId(),

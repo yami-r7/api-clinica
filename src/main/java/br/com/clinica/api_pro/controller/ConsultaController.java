@@ -4,6 +4,9 @@ import br.com.clinica.api_pro.consulta.*;
 import br.com.clinica.api_pro.medico.MedicoRepository;
 import br.com.clinica.api_pro.paciente.PacienteRepository;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +35,14 @@ public class ConsultaController {
 
         return ResponseEntity.ok(new DadosDetalhamentoConsulta(consulta));
     }
+
+    @GetMapping
+    public ResponseEntity<Page<DadosDetalhamentoConsulta>> listar(@PageableDefault(size = 10, sort = {"data"}) Pageable paginacao) {
+        var page = consultaRepository.findAll(paginacao).map(DadosDetalhamentoConsulta::new);
+
+        return ResponseEntity.ok(page);
+    }
+
 
     @DeleteMapping("/{id}")
     @Transactional
